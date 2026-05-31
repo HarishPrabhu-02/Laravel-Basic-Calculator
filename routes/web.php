@@ -1,18 +1,19 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CalculationController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 // Adds x and y
-Route::get('/addition',[CalculationController::class,'add']);
+Route::get('/add/{x}/{y}',[CalculationController::class,'add']);
 
 //Subtracts
-Route::get('/subtraction',[CalculationController::class,'subtract']);
+Route::get('/subtract/{x}/{y}',[CalculationController::class,'subtract']);
 
 //Multiplys
-Route::get('/multiplication',[CalculationController::class,'multiply']);
+Route::get('/multiply/{x}/{y}',[CalculationController::class,'multiply']);
 
 //Divides
-Route::get('/division',[CalculationController::class,'divide']);
+Route::get('/divide/{x}/{y}',[CalculationController::class,'divide']);

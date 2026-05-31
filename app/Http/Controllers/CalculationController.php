@@ -2,55 +2,51 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class CalculationController extends Controller
 {
-    public function store(Request $request)
+    public function add($x, $y): JsonResponse
     {
-        // 1. Validate the request data
-        $validated = $request->validate([
-            'x' => 'required|numeric',
-            'y' => 'required|numeric',
-            'operation' => 'required|in:add,subtract,multiply,divide',
-        ]);
+        return $this->processCalculation('add', $x, $y, fn($a, $b) => $a + $b);
+    }
 
-        $x = $validated['x'];
-        $y = $validated['y'];
-        $operation = $validated['operation'];
-        $result = 0;
+    public function subtract($x, $y): JsonResponse
+    {
+        return $this->processCalculation('subtract', $x, $y, fn($a, $b) => $a - $b);
+    }
 
-        // 2. Perform the calculation based on the operation type
-        switch ($operation) {
-            case 'add':
-                $result = $x + $y;
-                break;
-            case 'subtract':
-                $result = $x - $y;
-                break;
-            case 'multiply':
-                $result = $x * $y;
-                break;
-            case 'divide':
-                // Prevent division by zero error
-                if ($y == 0) {
-                    return response()->json(['error' => 'Division by zero is not allowed.'], 422);
-                }
-                $result = $x / $y;
-                break;
+    public function multiply($x, $y): JsonResponse
+    {
+        return $this->processCalculation('multiply', $x, $y, fn($a, $b) => $a * $b);
+    }
+
+    public function divide($x, $y): JsonResponse
+    {
+        if (is_numeric($y) && $y == 0) {
+            return response()->json(['error' => 'Division by zero is not allowed.'], 400);
+        }
+        
+        return $this->processCalculation('divide', $x, $y, fn($a, $b) => $a / $b);
+    }
+
+    // Validates inputs, executes the math logic, and formats the JSON response.
+    private function processCalculation(string $operation, $x, $y, callable $mathLogic): JsonResponse
+    {
+        //Check if the two inputs are of numeric type
+        if (!is_numeric($x) || !is_numeric($y)) {
+            return response()->json(['error' => 'Both parameters must be numeric.'], 400);
         }
 
-        // 3. Save to the database
-        $calculation = Calculation::create([
-            'x' => $x,
-            'y' => $y,
-            'operation' => $operation,
-            'result' => $result,
-        ]);
+        //Returns the results as a JSON response
 
         return response()->json([
-            'message' => 'Calculation saved successfully!',
-            'data' => $calculation
-        ], 201);
+            'operation' => $operation,
+            'operands' => [
+                'x' => (float) $x,
+                'y' => (float) $y
+            ],
+            'result' => $mathLogic((float) $x, (float) $y)
+        ]);
     }
 }
